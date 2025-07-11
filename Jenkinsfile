@@ -338,132 +338,133 @@ pipeline {
         }
 
         // 🔥 AUTOMATIC PROMOTION STAGES WITH AUTHENTICATION
-        stage('Promote to Staging') {
-            when {
-                branch 'dev'
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
-            }
-            steps {
-                script {
-                    echo "✅ DEV build successful! Promoting to STAGING..."
+        // stage('Promote to Staging') {
+        //     when {
+        //         branch 'dev'
+        //         expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+        //     }
+        //     steps {
+        //         script {
+        //             echo "✅ DEV build successful! Promoting to STAGING..."
                     
-                    withCredentials([usernamePassword(
-                        credentialsId: env.GITHUB_CREDENTIALS,
-                        usernameVariable: 'GIT_USERNAME',
-                        passwordVariable: 'GIT_TOKEN'
-                    )]) {
-                        sh '''
-                            # Configure Git
-                            git config user.name "Jenkins Auto-Promotion"
-                            git config user.email "jenkins@yourcompany.com"
+        //             withCredentials([usernamePassword(
+        //                 credentialsId: env.GITHUB_CREDENTIALS,
+        //                 usernameVariable: 'GIT_USERNAME',
+        //                 passwordVariable: 'GIT_TOKEN'
+        //             )]) {
+        //                 sh '''
+        //                     # Configure Git
+        //                     git config user.name "Jenkins Auto-Promotion"
+        //                     git config user.email "jenkins@yourcompany.com"
                             
-                            # Get repository URL and add authentication
-                            REPO_URL=$(git config --get remote.origin.url)
-                            REPO_URL_WITH_TOKEN=$(echo $REPO_URL | sed "s|https://github.com/|https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/|")
+        //                     # Get repository URL and add authentication
+        //                     REPO_URL=$(git config --get remote.origin.url)
+        //                     REPO_URL_WITH_TOKEN=$(echo $REPO_URL | sed "s|https://github.com/|https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/|")
                             
-                            # Set authenticated remote
-                            git remote set-url origin $REPO_URL_WITH_TOKEN
+        //                     # Set authenticated remote
+        //                     git remote set-url origin $REPO_URL_WITH_TOKEN
                             
-                            # Fetch latest changes
-                            git fetch origin
+        //                     # Fetch latest changes
+        //                     git fetch origin
                             
-                            # Switch to staging branch
-                            git checkout staging
-                            git pull origin staging
+        //                     # Switch to staging branch
+        //                     git checkout staging
+        //                     git pull origin staging
                             
-                            # Merge dev into staging
-                            git merge origin/dev --no-ff -m "Auto-promote: Merge dev into staging (Build #${BUILD_NUMBER})"
+        //                     # Merge dev into staging
+        //                     git merge origin/dev --no-ff -m "Auto-promote: Merge dev into staging (Build #${BUILD_NUMBER})"
                             
-                            # Push to staging
-                            git push origin staging
+        //                     # Push to staging
+        //                     git push origin staging
                             
-                            echo "✅ Successfully promoted dev to staging"
-                        '''
-                    }
+        //                     echo "✅ Successfully promoted dev to staging"
+        //                 '''
+        //             }
                     
-                    echo "🎉 Code promoted to STAGING branch!"
-                    echo "📢 This will trigger a new build for staging branch"
-                }
-            }
-        }
+        //             echo "🎉 Code promoted to STAGING branch!"
+        //             echo "📢 This will trigger a new build for staging branch"
+        //         }
+        //     }
+        // }
 
-        stage('Promote to Master') {
-            when {
-                branch 'staging'
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
-            }
-            steps {
-                script {
-                    echo "✅ STAGING build successful! Promoting to MASTER..."
+        // stage('Promote to Master') {
+        //     when {
+        //         branch 'staging'
+        //         expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+        //     }
+        //     steps {
+        //         script {
+        //             echo "✅ STAGING build successful! Promoting to MASTER..."
                     
-                    withCredentials([usernamePassword(
-                        credentialsId: env.GITHUB_CREDENTIALS,
-                        usernameVariable: 'GIT_USERNAME',
-                        passwordVariable: 'GIT_TOKEN'
-                    )]) {
-                        sh '''
-                            # Configure Git
-                            git config user.name "Jenkins Auto-Promotion"
-                            git config user.email "jenkins@yourcompany.com"
+        //             withCredentials([usernamePassword(
+        //                 credentialsId: env.GITHUB_CREDENTIALS,
+        //                 usernameVariable: 'GIT_USERNAME',
+        //                 passwordVariable: 'GIT_TOKEN'
+        //             )]) {
+        //                 sh '''
+        //                     # Configure Git
+        //                     git config user.name "Jenkins Auto-Promotion"
+        //                     git config user.email "jenkins@yourcompany.com"
                             
-                            # Get repository URL and add authentication
-                            REPO_URL=$(git config --get remote.origin.url)
-                            REPO_URL_WITH_TOKEN=$(echo $REPO_URL | sed "s|https://github.com/|https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/|")
+        //                     # Get repository URL and add authentication
+        //                     REPO_URL=$(git config --get remote.origin.url)
+        //                     REPO_URL_WITH_TOKEN=$(echo $REPO_URL | sed "s|https://github.com/|https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/|")
                             
-                            # Set authenticated remote
-                            git remote set-url origin $REPO_URL_WITH_TOKEN
+        //                     # Set authenticated remote
+        //                     git remote set-url origin $REPO_URL_WITH_TOKEN
                             
-                            # Fetch latest changes
-                            git fetch origin
+        //                     # Fetch latest changes
+        //                     git fetch origin
                             
-                            # Switch to master branch
-                            git checkout master
-                            git pull origin master
+        //                     # Switch to master branch
+        //                     git checkout master
+        //                     git pull origin master
                             
-                            # Merge staging into master
-                            git merge origin/staging --no-ff -m "Auto-promote: Merge staging into master (Build #${BUILD_NUMBER})"
+        //                     # Merge staging into master
+        //                     git merge origin/staging --no-ff -m "Auto-promote: Merge staging into master (Build #${BUILD_NUMBER})"
                             
-                            # Create a release tag
-                            git tag -a "release-${BUILD_NUMBER}" -m "Release build #${BUILD_NUMBER}"
+        //                     # Create a release tag
+        //                     git tag -a "release-${BUILD_NUMBER}" -m "Release build #${BUILD_NUMBER}"
                             
-                            # Push to master with tags
-                            git push origin master
-                            git push origin --tags
+        //                     # Push to master with tags
+        //                     git push origin master
+        //                     git push origin --tags
                             
-                            echo "✅ Successfully promoted staging to master"
-                            echo "🏷️  Created release tag: release-${BUILD_NUMBER}"
-                        '''
-                    }
+        //                     echo "✅ Successfully promoted staging to master"
+        //                     echo "🏷️  Created release tag: release-${BUILD_NUMBER}"
+        //                 '''
+        //             }
                     
-                    echo "🎉 Code promoted to MASTER branch!"
-                    echo "🏷️ Release tag created: release-${BUILD_NUMBER}"
-                    echo "📢 This will trigger a new build for master branch"
-                }
-            }
-        }
+        //             echo "🎉 Code promoted to MASTER branch!"
+        //             echo "🏷️ Release tag created: release-${BUILD_NUMBER}"
+        //             echo "📢 This will trigger a new build for master branch"
+        //         }
+        //     }
+        // }
 
-        stage('Post-Deploy Verification') {
-            when {
-                anyOf {
-                    branch 'staging'
-                    branch 'master'
-                }
-            }
-            steps {
-                script {
-                    echo "✅ Running post-deployment verification..."
-                    sh '''
-                        # Add health checks or smoke tests here
-                        echo "Verifying deployment..."
+    //     stage('Post-Deploy Verification') {
+    //         when {
+    //             anyOf {
+    //                 branch 'staging'
+    //                 branch 'master'
+    //             }
+    //         }
+    //         steps {
+    //             script {
+    //                 echo "✅ Running post-deployment verification..."
+    //                 sh '''
+    //                     # Add health checks or smoke tests here
+    //                     echo "Verifying deployment..."
                         
-                        # Example: Check if application is responding
-                        # curl -f http://your-app-url/health || exit 1
+    //                     # Example: Check if application is responding
+    //                     # curl -f http://your-app-url/health || exit 1
                         
-                        echo "✅ Deployment verification passed"
-                    '''
-                }
-            }
-        }
+    //                     echo "✅ Deployment verification passed"
+    //                 '''
+    //             }
+    //         }
+    //     }
+    // }
     }
 
     post {

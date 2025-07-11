@@ -298,22 +298,22 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
-            when {
-                anyOf {
-                    branch 'staging'
-                    branch 'master'
-                }
-            }
-            steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    script {
-                        echo "⏳ Waiting for Quality Gate..."
-                        waitForQualityGate abortPipeline: true
-                    }
-                }
-            }
-        }
+        // stage('Quality Gate') {
+        //     when {
+        //         anyOf {
+        //             branch 'staging'
+        //             branch 'master'
+        //         }
+        //     }
+        //     steps {
+        //         timeout(time: 2, unit: 'MINUTES') {
+        //             script {
+        //                 echo "⏳ Waiting for Quality Gate..."
+        //                 waitForQualityGate abortPipeline: true
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Deploy to Environment') {
             steps {

@@ -74,13 +74,9 @@
 
 
 
+// Jenkinsfile (place this in your repository root)
 pipeline {
     agent any
-
-    // 🔥 This enables automatic triggering via GitHub webhook
-    triggers {
-        githubPush()
-    }
 
     tools {
         nodejs 'NodeJS-18'
@@ -88,37 +84,15 @@ pipeline {
 
     environment {
         SONARQUBE = 'Jenkins-sonar-server'
+        BRANCH_NAME = "${env.BRANCH_NAME}"
     }
 
     stages {
-        stage('Validate Branch') {
-            steps {
-                script {
-                    def allowedBranches = ['dev', 'staging']
-                    def currentBranch = env.BRANCH_NAME ?: env.GIT_BRANCH?.replace('origin/', '')
-                    
-                    echo "Current branch: ${currentBranch}"
-                    
-                    if (!allowedBranches.contains(currentBranch)) {
-                        echo "⚠️ Skipping build for branch: ${currentBranch}"
-                        echo "✅ Only building: ${allowedBranches}"
-                        currentBuild.result = 'ABORTED'
-                        return
-                    }
-                    echo "✅ Building branch: ${currentBranch}"
-                }
-            }
-        }
-
         stage('Checkout') {
             steps {
-                checkout scm
                 script {
-                    env.GIT_COMMIT_SHORT = sh(
-                        script: "git rev-parse --short HEAD",
-                        returnStdout: true
-                    ).trim()
-                    echo "Building commit: ${env.GIT_COMMIT_SHORT}"
+                    echo "🔄 Building branch: ${env.BRANCH_NAME}"
+                    echo "📝 Commit: ${env.GIT_COMMIT}"
                 }
             }
         }
@@ -131,7 +105,6 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh 'ls -l ./node_modules/.bin/jest'
                 sh 'chmod +x ./node_modules/.bin/jest'
                 sh './node_modules/.bin/jest'
             }
@@ -152,9 +125,14 @@ pipeline {
                     script {
                         if (fileExists('coverage/lcov.info')) {
                             archiveArtifacts artifacts: 'coverage/**/*', allowEmptyArchive: true
-                            echo "✅ Coverage report archived"
-                        } else {
-                            echo "⚠️ No coverage report found"
+                            publishHTML([
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'coverage/lcov-report',
+                                reportFiles: 'index.html',
+                                reportName: 'Coverage Report'
+                            ])
                         }
                     }
                 }
@@ -171,8 +149,22 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
+                timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'dev') {
+                        echo "🚀 Deploying to DEV environment"
+                        // sh 'npm run deploy:dev'
+                    } else if (env.BRANCH_NAME == 'staging') {
+                        echo "🚀 Deploying to STAGING environment"
+                        // sh 'npm run deploy:staging'
+                    }
                 }
             }
         }
@@ -180,13 +172,12 @@ pipeline {
 
     post {
         success {
-            echo "✅ Build successful for ${env.BRANCH_NAME} - commit ${env.GIT_COMMIT_SHORT}"
+            echo "✅ Pipeline completed successfully for ${env.BRANCH_NAME}"
+            // Optional: Send success notification
         }
         failure {
-            echo "❌ Build failed for ${env.BRANCH_NAME} - commit ${env.GIT_COMMIT_SHORT}"
-        }
-        aborted {
-            echo "⚠️ Build aborted for ${env.BRANCH_NAME}"
+            echo "❌ Pipeline failed for ${env.BRANCH_NAME}"
+            // Optional: Send failure notification
         }
         always {
             cleanWs()

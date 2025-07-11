@@ -2,16 +2,16 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NodeJS-18' // 👈 use the name you added in Jenkins
+        nodejs 'NodeJS-18' // Make sure this matches your Jenkins Node.js config name
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Get code from GitHub  to code.
                 checkout scm
             }
         }
+
         stage('Build') {
             steps {
                 sh 'npm install'
@@ -20,10 +20,10 @@ pipeline {
 
         stage('Test') {
             steps {
-                // sh 'npm test'
-                 sh  'npx jest'
+                sh 'ls -l ./node_modules/.bin/jest'
+                sh 'chmod +x ./node_modules/.bin/jest'
+                sh './node_modules/.bin/jest'
             }
         }
-    
     }
 }
